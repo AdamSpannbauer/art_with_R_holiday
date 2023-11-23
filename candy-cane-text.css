@@ -1,0 +1,25 @@
+/* adapted from: https://codemyui.com/css-only-candy-cane-text-animation/ */
+.candy-cane-text {
+  --color1: #64ebac;
+  --color2: #eb6864;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color1),
+    var(--color1) 30px,
+    var(--color2) 30px,
+    var(--color2) 60px
+  );
+  background-clip: text;
+  color: transparent;
+  -webkit-background-clip: text;
+  animation: 80s linear 0s infinite move;
+}
+
+@keyframes move {
+  from {
+    background-position: 0px;
+  }
+  to {
+    background-position: 1000px;
+  }
+}

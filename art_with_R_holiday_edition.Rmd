@@ -1,0 +1,709 @@
+---
+title: "Art with R: <span class='candy-cane-text'>Holiday edition</span>"
+author: "Adam Spannbauer"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    css: "candy-cane-text.css"
+    theme: journal
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    includes:
+      in_header: "../favicon.html"
+---
+
+# Goals of document
+
+Note: this is essentially a solution file! If you'd like to work through the document without all the code provided download [this .Rmd file](https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/AdamSpannbauer/art-with-R-intro/blob/master/art_with_r.Rmd) (**link warning!** clicking the link will auto download the .Rmd).  Using the prompts will be much much much better for programming practice!!!
+
+* See how you can make some interesting patterns with relatively low effort
+* Practice programming with a visual payoff
+
+```{r message=FALSE}
+# For saving plots to SVG
+library(svglite)
+
+# For easy plotting of shapes
+library(plotrix)
+
+# For use of "perlin noise"
+library(ambient)
+```
+
+### `map()` range helper
+
+A useful helper function below; it will "map" a number to a new range.
+
+For example, I have test scores out of 80 points but I'd like to have them out of 100.  Someone scored a 50 and I'd like to know their score out of 100.  This helper would let you do: 
+`map(50,0,80,0,100)`
+
+My example of course could be done as `100 * 50 / 80`.  Trust me that this helper is pretty useful for cases when you can't easily do mental math to convert ranges.
+
+```{r}
+map <- function(x, x_lo, x_hi, new_lo, new_hi) {
+  scld <- (x - x_lo) / (x_hi - x_lo)
+  scld * (new_hi - new_lo) + new_lo
+}
+
+# map 5 from 0 to 10 range to be in 0 to 100 range
+map(5, 0, 10, 0, 100) # -> 50
+
+# map 10 from 0 to 10 range to be in 0 to 100 range
+map(10, 0, 10, 0, 100) # -> 100
+
+# map 100 from 0 to 200 range to be in 0 to 1 range
+map(100, 0, 200, 0, 1) # -> 0.5
+```
+
+# Math based visuals
+
+With a helper out of the way.  Let's start with a cosine wave... cause... why not?  If you feel good about making simple plots with R, then this is pretty familiar.
+
+Adam examples based on cosine/sine waves:
+
+* https://www.instagram.com/p/CRWiSYioNXH/
+* https://www.instagram.com/p/CVVc6dXlkD6/
+* https://www.instagram.com/p/CWTXCc-F8X9/
+
+```{r}
+x <- 1:(100 * pi) / 20
+y <- cos(x)
+
+plot(x, y, type = "l")
+```
+
+## Removing chart elements
+
+Axes are of course needed if you're trying to do analytics work, but we're trying to make pretty pictures!
+
+Let's do away with the pesky axes so we can have a prettier picture!
+
+```{r}
+plot(
+  x, y,
+  type = "l", # plot a line instead of points
+  xlab = "", # no x axis label
+  ylab = "", # no y axis label
+  axes = FALSE, # turn off axes
+  frame.plot = FALSE # turn of the outline around the plot
+)
+```
+
+That's a lot of code to keep track of.  This is the perfect use case for a function.
+
+Convert the above to a function named `plot_lines_only`.  This function should accept 2 arguments: `x` and `y`.
+
+```{r}
+plot_lines_only <- function(x, y, ...) {
+  plot(
+    x, y,
+    type = "l", # plot a line instead of points
+    xlab = "", # no x axis label
+    ylab = "", # no y axis label
+    axes = FALSE, # turn off axes
+    frame.plot = FALSE, # turn of the outline around the plot
+    ...
+  )
+}
+```
+
+Prove it produces the same output:
+
+```{r}
+plot_lines_only(x, y)
+```
+
+## Extending ideas with loops
+
+Just one line is boring.... let's add another wave with smaller peaks.  We can use the `lines()` function to add to an existing plot.
+
+```{r}
+plot_lines_only(x, y)
+lines(x, y * 0.5)
+```
+
+Add programming to add flair! Let's add a bunch of waves at decreasing heights.
+
+Trivia question! What's the height of a wave called?
+
+* Loop through the values 1 to 10
+* Use `map()` to change the 1-10 number to be in range 0.9-0.1
+* Plot the original x, y using `lines()` but multiply y by this new number we've created
+
+```{r}
+# initial plot
+plot_lines_only(x, y)
+
+# loop through values to scale y by
+for (i in 1:10) {
+  # convert my i from its 1-10 range
+  # get a number back in range 1 to 0.1
+  scl <- map(i, 1, 10, 1, 0.1)
+
+  # Use lines to plot
+  lines(x, y * scl)
+}
+```
+
+* Play with things!
+  * change the number of waves being made
+  * play with the values in map
+  * try adding a little bit to x each time (ie x + i / 30)
+
+```{r}
+# Changing output scl to go from 1 to -1
+plot_lines_only(x, y)
+
+for (i in 1:30) {
+  scl <- map(i, 1, 30, 1, -1)
+  lines(x, y * scl)
+}
+```
+
+
+```{r}
+# Changing adding a little bit to x each time to shift smaller waves to right
+plot_lines_only(x, y)
+
+for (i in 1:30) {
+  scl <- map(i, 1, 30, 1, 0.1)
+  lines(x + i / 30, y * scl)
+}
+```
+```{r}
+# Shifting waves to right and scaling waves 1 to -1
+plot_lines_only(x, y)
+
+for (i in 1:30) {
+  scl <- map(i, 1, 30, 1, -1)
+  lines(x + i / 30, y * scl)
+}
+```
+
+```{r}
+# Shifting waves to right a little more
+plot_lines_only(x, y)
+
+for (i in 1:30) {
+  scl <- map(i, 1, 30, 1, -1)
+  lines(x + i / 10, y * scl)
+}
+```
+
+## Extending ideas with colors
+
+We can even color this pretty easily:
+
+```{r}
+palette <- rainbow(10)
+plot_lines_only(x, y)
+
+for (i in 1:10) {
+  scl <- map(i, 1, 10, 1, 0.1)
+  lines(x, y * scl, col = palette[i])
+}
+```
+
+You can chuck this rainbow palette at an old idea
+
+```{r}
+n_waves <- 30
+pallete <- rainbow(n_waves)
+
+plot_lines_only(x, y, col = pallete[1])
+
+for (i in 1:n_waves) {
+  scl <- map(i, 1, n_waves, 1, 0.1)
+  lines(x + i / 30, y * scl, col = pallete[i])
+}
+```
+
+## Additional ideas to play with
+
+Other ideas to play with:
+
+* Does this look cooler with sin?
+* Copy paste the loop (2 loops->2 sets of waves) and play with the values in `map()`
+* Overlay `sin()` and `cos()`
+* Overlay this wave with a flipped version of itself
+
+```{r}
+n_waves <- 30
+pallete <- rainbow(n_waves)
+
+plot_lines_only(x, y, col = pallete[1])
+
+for (i in 1:n_waves) {
+  scl <- map(i, 1, n_waves, 1, 0.1)
+  lines(x + i / 30, y * scl, col = pallete[i])
+}
+
+for (i in 1:n_waves) {
+  scl <- map(i, 1, n_waves, 1, 0.1)
+  lines(x - i / 30, y * scl, col = pallete[i])
+}
+```
+
+# Saving visuals
+
+Is this art yet? Trick question! If you think it's art, it's art. If you want to save it there's a couple options.
+
+Save as a PNG:
+```r
+png('my_aRt.png')
+
+# your plot code goes here
+
+dev.off()
+```
+
+Save as an SVG:
+```r
+library(svglite)
+
+svglite('my_aRt.svg')
+
+# your plot code goes here
+
+dev.off()
+```
+
+Save our work so far:
+
+```{r}
+png("my_aRt.png")
+
+plot_lines_only(x, y)
+
+for (i in 1:10) {
+  scl <- map(i, 1, 10, 1, 0.1)
+  lines(x, y * scl)
+}
+
+dev.off()
+```
+
+# Drawing shapes
+
+## Blank canvas helper
+
+A helper to create a plot canvas with equal axis lengths. 
+
+```{r}
+# A helper to start a blank canvas
+# Defaults to a range from 1 to 100
+blank_canvas <- function(rng = 1:100) {
+  plot(
+    rng,
+    asp = 1,
+    type = "n", xlab = "", ylab = "",
+    axes = FALSE, frame.plot = FALSE
+  )
+}
+
+# Very boring output (should be blank)
+blank_canvas()
+```
+
+## Basic shapes
+
+* Use rect and draw.circle to place shapes on the canvas
+
+```{r}
+blank_canvas(1:100)
+
+rect(xleft = 0, ybottom = 0, xright = 50, ytop = 50)
+draw.circle(x = 50, y = 50, radius = 10)
+```
+
+There might be a triangle function somewhere... or you can make your own!
+
+```{r}
+triangle <- function(x1, y1, x2, y2, x3, y3, border = "black", ...) {
+  lines(c(x1, x2), c(y1, y2), col = border, ...)
+  lines(c(x2, x3), c(y2, y3), col = border, ...)
+  lines(c(x3, x1), c(y3, y1), col = border, ...)
+}
+
+
+blank_canvas(1:100)
+
+rect(xleft = 0, ybottom = 0, xright = 50, ytop = 50)
+draw.circle(25, 50, 20)
+triangle(20, 20, 45, 65, 70, 20)
+```
+
+```{r}
+blank_canvas(1:100)
+
+rect(0, 0, 50, 50, border = "red")
+draw.circle(25, 50, 20, border = "green")
+triangle(20, 20, 45, 65, 70, 20, border = "blue")
+```
+
+## Making a grid of shapes with loops
+
+First we can make a row of shapes:
+
+```{r}
+blank_canvas(1:100)
+
+radius <- 4
+y <- 50
+
+ncols <- 10
+for (i in 1:ncols) {
+  x <- map(i, 1, ncols, 1, 100)
+  draw.circle(x, y, radius)
+}
+```
+
+Extending this loop idea, instead of just plotting a single row.  We can loop over different values of y and create rows at different heights. With the below nested loop we can display a grid of circles.
+
+```{r}
+blank_canvas(1:100)
+
+# Change values of radius, nrows, and ncols
+#   to see different patterns
+radius <- 4
+
+nrows <- 10
+ncols <- 10
+for (i in 1:nrows) {
+  y <- map(i, 1, nrows, 1, 100)
+  # row code from before (could make this a function)
+  for (j in 1:ncols) {
+    x <- map(j, 1, ncols, 1, 100)
+    draw.circle(x, y, radius)
+  }
+}
+```
+
+With this circle grid framework you can make some interesting looking patterns by using different values of radius.
+
+Instead of setting a radius for every circle, we can base the radius on the location of the circle.  Try out things like:
+
+* x + y, x * y, etc
+* make up your own!
+
+```{r}
+blank_canvas(1:100)
+
+nrows <- 10
+ncols <- 10
+for (i in 1:nrows) {
+  y <- map(i, 1, nrows, 1, 100)
+  for (j in 1:ncols) {
+    x <- map(j, 1, ncols, 1, 100)
+
+    # change this! find something cool
+    radius <- x + y
+    draw.circle(x, y, radius)
+  }
+}
+```
+
+Here's an example finding the distance between the grid point and the grid center.  Then we can "map" that distance between a min and a max value of radius (farther from center -> larger radius)
+
+What else could you map radius to?
+
+```{r}
+pt_dist <- function(x1, y1, x2, y2) {
+  sqrt((x1 - x2)^2 + (y1 - y2)^2)
+}
+
+blank_canvas(1:100)
+
+# center of grid is at 50, 50
+cx <- 50
+cy <- 50
+
+min_radius <- 0.1
+max_radius <- 10
+
+nrows <- 25
+ncols <- 25
+for (i in 1:nrows) {
+  y <- map(i, 1, nrows, 1, 100)
+  for (j in 1:ncols) {
+    x <- map(j, 1, ncols, 1, 100)
+
+    dist_to_center <- pt_dist(x, y, cx, cy)
+    radius <- map(dist_to_center, 0, 100, min_radius, max_radius)
+
+    draw.circle(x, y, radius)
+  }
+}
+```
+
+# Noise - a controlled randomness
+
+One way to end up with some nice organic feeling patterns is to use "noise".  In particular, I've used "Perlin noise" a good bit. With this noise generation process we get a controlled randomness that can be used for generating random terrain in a video game, or.... can be used to size circles in a grid.
+
+Adam examples:
+
+* https://www.instagram.com/p/CX_e2eXl6df/
+* https://www.instagram.com/p/CW8jr93liab/
+* https://www.instagram.com/p/CVdNAB9FEVA/
+* https://www.instagram.com/p/CQyjUI_rNZm/
+
+Running this will give different output each time (unless you give the noise a seed)
+
+```{r}
+blank_canvas(1:100)
+
+# Play with all of these numbers (esp freq imo)
+min_radius <- 0.001
+max_radius <- 7
+
+nrows <- 25
+ncols <- 25
+
+freq <- 0.01
+my_noise <- noise_perlin(c(nrows, ncols), frequency = freq)
+
+for (i in 1:nrows) {
+  y <- map(i, 1, nrows, 1, 100)
+  for (j in 1:ncols) {
+    x <- map(j, 1, ncols, 1, 100)
+
+    radius <- map(
+      my_noise[i, j], min(my_noise), max(my_noise), min_radius, max_radius
+    )
+
+    draw.circle(x, y, radius)
+  }
+}
+```
+
+# Moiré
+
+## More shape loops!
+
+More circles!!
+
+* Write a for loop and use `map()` to make a bunch of "concentric" circles
+
+```{r}
+blank_canvas()
+
+x <- 50
+y <- 50
+
+min_radius <- 2
+max_radius <- 20
+n_rings <- 10
+
+# Do loop stuff here:
+for (i in 1:n_rings) {
+  r <- map(i, 1, n_rings, min_radius, max_radius)
+  draw.circle(x, y, r)
+}
+```
+
+Convert the code to be a function named `concentric_circles`.  It should have arguments of:
+
+* x
+* y
+* max_r
+* min_r
+* n_rings
+* we're gonna also add a fancy `...` thingamajig
+
+```{r}
+concentric_circles <- function(x, y, max_r = 20, min_r = 2, n_rings = 10, ...) {
+  # Do loop stuff here:
+  for (i in 1:n_rings) {
+    r <- map(i, 1, n_rings, min_r, max_r)
+    draw.circle(x, y, r, ...)
+  }
+}
+
+blank_canvas()
+concentric_circles(50, 50, border = "red")
+```
+
+## Creating visuals with moiré effects
+
+Let's look at a cool effect known as Moiré.
+
+> "When a grid's misaligned with another behind that's a moiré!"
+
+quote source: https://xkcd.com/1814/
+
+Examples (just image google of "moiré"): https://www.google.com/search?q=moire&tbm=isch
+
+The idea in it's simplest form:
+
+* draw something
+* draw the same thing again over the top of the first, but misalign it a little bit
+
+There are other ways to play with this effect.  But this is the above steps are the simplest to express
+
+Adam examples:
+
+* https://www.instagram.com/p/CUu1_41FGDo/
+  * this ones framed in my office!
+* https://www.instagram.com/p/CSKGBNGrNsZ/
+  * moiré from a sine wave!
+* https://www.instagram.com/p/CUfY6DVlWbY/
+* https://www.instagram.com/p/CZXBIhLl5e8/
+
+Instead of a single set of concentric circles if we overlap them we will see moiré patterns appear.  Different ways of overlapping lead to different effects.
+
+* Draw concentric circles 
+* Draw concentric circles again but move the center point
+
+```{r}
+blank_canvas(1:100)
+
+max_r <- 64
+min_r <- 2
+n_rings <- 32
+
+concentric_circles(50, 50, max_r, min_r, n_rings)
+concentric_circles(52, 50, max_r, min_r, n_rings)
+```
+
+* Do it again and maybe add a 3rd?
+* Color the circles?
+* Play with how far we scootch the circle and other parameters!!!
+
+```{r}
+blank_canvas(1:100)
+
+max_r <- 64
+min_r <- 2
+n_rings <- 32
+
+dx <- 3
+
+concentric_circles(50 - dx, 50, max_r, min_r, n_rings, border = "pink", lwd = 2)
+concentric_circles(50 + dx, 50, max_r, min_r, n_rings, border = "yellow", lwd = 2)
+concentric_circles(50, 50, max_r, min_r, n_rings, border = "#00f000", lwd = 1.5)
+```
+
+
+We could also put these back in a grid i guess...?
+
+Below is same grid code, but I changed out the circle function to be ours
+
+```{r}
+blank_canvas(1:100)
+
+nrows <- 10
+ncols <- 10
+for (i in 1:nrows) {
+  y <- map(i, 1, nrows, 1, 100)
+  for (j in 1:ncols) {
+    x <- map(j, 1, ncols, 1, 100)
+    max_r <- map(x * y, 0, 100**2, 1, 10)
+
+    concentric_circles(x, y, min_r = 0.1, max_r = max_r, n_rings = 5)
+  }
+}
+```
+
+We could then plug the radius back up to noise i guess...?
+
+```{r}
+blank_canvas(1:100)
+
+min_radius <- 0.01
+max_radius <- 5
+n_rings <- 3
+
+nrows <- 25
+ncols <- 25
+
+freq <- 0.03
+my_noise <- noise_perlin(c(nrows, ncols), frequency = freq)
+
+for (i in 1:nrows) {
+  y <- map(i, 1, nrows, 1, 100)
+  for (j in 1:ncols) {
+    x <- map(j, 1, ncols, 1, 100)
+    max_r <- map(
+      my_noise[i, j], min(my_noise), max(my_noise), min_radius, max_radius
+    )
+
+    concentric_circles(x, y, min_r = 0.1, max_r = max_r, n_rings = n_rings)
+  }
+}
+```
+
+# Make your own aRt!
+
+There you have it, a quick whirlwind of different ideas. At the core, try things and see what you like.  Don't take it too seriously and have some fun.  It can be a really thought out thing or just mindlessly tweaking things and hoping something cool appears.
+
+<center>
+
+<img src="https://cdn.britannica.com/03/193803-050-CBC590FA/Bob-Ross.jpg" width="60%">
+
+</center>
+
+Share with me any images you make! I'd love to see them.
+
+# All helper functions used
+
+All helper functions used in this file are here:
+
+```{r}
+# "map" a value (x) to a new range
+# Example: map(5, 0, 10, 0, 100) -> 50
+# Example: map(100, 0, 200, 0, 1) -> 0.5
+map <- function(x, x_lo, x_hi, new_lo, new_hi) {
+  scld <- (x - x_lo) / (x_hi - x_lo)
+  scld * (new_hi - new_lo) + new_lo
+}
+
+# Works just like base R plot(x, y, type = "l") to
+# plot a line using x and y, but this helper removes
+# all the chart elements to leave just the lines (no axes etc)
+plot_lines_only <- function(x, y, ...) {
+  plot(
+    x, y,
+    type = "l", # plot a line instead of points
+    xlab = "", # no x axis label
+    ylab = "", # no y axis label
+    axes = FALSE, # turn off axes
+    frame.plot = FALSE, # turn of the outline around the plot
+    ...
+  )
+}
+
+# Create a blank chart canvas of a given range
+# Range will be used for both x and y axes
+blank_canvas <- function(rng = 1:100) {
+  plot(
+    rng,
+    asp = 1,
+    type = "n", xlab = "", ylab = "",
+    axes = FALSE, frame.plot = FALSE
+  )
+}
+
+# Draw a triangle on a plot given x & y for its
+# 3 vertices
+triangle <- function(x1, y1, x2, y2, x3, y3, border = "black", ...) {
+  lines(c(x1, x2), c(y1, y2), col = border, ...)
+  lines(c(x2, x3), c(y2, y3), col = border, ...)
+  lines(c(x3, x1), c(y3, y1), col = border, ...)
+}
+
+# Draw a given number of concentric circles between
+# a given range of radii
+concentric_circles <- function(x, y, max_r = 20, min_r = 2, n_rings = 10, ...) {
+  # Do loop stuff here:
+  for (i in 1:n_rings) {
+    r <- map(i, 1, n_rings, min_r, max_r)
+    draw.circle(x, y, r, ...)
+  }
+}
+
+# Measure euclidean distance between 2 xy points
+pt_dist <- function(x1, y1, x2, y2) {
+  sqrt((x1 - x2)^2 + (y1 - y2)^2)
+} 
+```
