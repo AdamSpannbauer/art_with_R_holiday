@@ -10,7 +10,7 @@ output:
     toc_depth: 2
     toc_float: true
     includes:
-      in_header: "../favicon.html"
+      in_header: "./favicon.html"
 ---
 
 # Goals of document
