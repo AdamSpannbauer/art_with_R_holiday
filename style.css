@@ -1,3 +1,8 @@
+/*All https? links will open in new tab; add icon for indication*/
+a[href^="http"]::after{
+  content: " ⧉";
+}
+
 /* adapted from: https://codemyui.com/css-only-candy-cane-text-animation/ */
 .candy-cane-text {
   --color1: #64ebac;

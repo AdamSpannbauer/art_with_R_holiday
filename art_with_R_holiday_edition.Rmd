@@ -4,7 +4,7 @@ author: "Adam Spannbauer"
 date: "`r Sys.Date()`"
 output: 
   html_document:
-    css: "candy-cane-text.css"
+    css: "style.css"
     theme: journal
     toc: true
     toc_depth: 2
@@ -17,8 +17,18 @@ Note: this is essentially a solution file! If you'd like to work through the doc
 
 # Goals of document
 
--   See how you can make some interesting patterns with relatively low effort
--   Practice programming with a visual payoff
+1. Have fun
+2. Try and make a pretty winter/holiday picture
+3. Accidentally practice and learn some coding things
+
+# Getting into it
+
+## Packages
+
+```{r}
+# Delete this line after use!
+# install.packages(c("svglite", "plotrix", "ambient"))
+```
 
 ```{r message=FALSE}
 # For saving plots to SVG
@@ -31,9 +41,11 @@ library(plotrix)
 library(ambient)
 ```
 
+## Start by plotting some random
+
 Let's start with a regular R plot. Plot `y` by `x`. Before we can plot `x` and `y` we need an `x` and a `y` to plot! Below makes some random data using the `runif()` function.
 
-`runif` (short for "random uniform") pulls random values from a ["uniform" distribution]() (uniform here means that all values are equally likely, the prbability of each value is uniform).
+`runif` (short for "random uniform") pulls random values from a ["uniform" distribution](https://www.statisticshowto.com/probability-and-statistics/statistics-definitions/uniform-distribution/) (uniform here means that all values are equally likely, the prbability of each value is uniform).
 
 ```{r}
 x <- runif(n = 32, min = -1, max = 11)
@@ -44,21 +56,25 @@ y <- runif(n = 32, min = 2, max = 11)
 plot(x, y)
 ```
 
+## Modifying axes
+
 It's snowing!!
 
-<p align="center">
-
+<center>
 <img src="https://i.imgur.com/94n8qwl.png" width="50%"/>
-
-</p>
+</center>
 
 Get them pesky axes out of there....
 
 ```{r}
-plot(x,
+par(pty = "s")
+plot(
+  x,
   y,
+  asp = 1, # aspect ratio
   xlab = "", # no x axis label
   ylab = "", # no y axis label
+  yaxt = "n",
   axes = FALSE, # turn off axes
   frame.plot = TRUE, # turn of the outline around the plot
 )
@@ -67,8 +83,11 @@ plot(x,
 Let's manually control the axes limits so that the snow isn't so close to the bottom of the frame.
 
 ```{r}
-plot(x,
+par(pty = "s")
+plot(
+  x,
   y,
+  asp = 1,
   xlim = c(0, 10),
   ylim = c(0, 10),
   xlab = "", # no x axis label
@@ -77,6 +96,8 @@ plot(x,
   frame.plot = TRUE, # turn of the outline around the plot
 )
 ```
+
+## Draw a hill with math!
 
 Let's add in some ground!  Flat ground is boring... what's a mathy way to make it look like we've got a hilltop?
 
@@ -96,18 +117,23 @@ x <- -1:11
 y <- -0.04 * (x - 4)^2 + 2
 
 # don't modify this plot code
-plot(x, y, type = "l", xlim = c(0, 10), ylim = c(0, 10))
+par(pty = "s")
+plot(x, y, asp = 1, type = "l", xlim = c(0, 10), ylim = c(0, 10))
 ```
 
 To combine this and our snow we can't use `plot()`.  We have two separate sets of `x`s & `y`s to draw and if we use `plot()` twice it will make two separate pictures.  We can use `lines()` to draw our hill after we use `plot()` to create our canvas and draw the snow.
 
 ```{r}
+par(pty = "s")
+
 x <- runif(32, 0, 10)
 y <- runif(32, 3, 10)
-plot(x,
+plot(
+  x,
   y,
   xlim = c(1, 9),
   ylim = c(0, 9),
+  asp = 1,
   xlab = "", # no x axis label
   ylab = "", # no y axis label
   axes = FALSE, # turn off axes
@@ -120,6 +146,7 @@ y <- -0.04 * (x - 4)^2 + 2
 lines(x, y)
 ```
 
+## Snowflakes should be different sizes
 
 What would make it look more like snow?...
 
@@ -136,12 +163,15 @@ First lets just look at how to modify the size of the points.
 The `cex` parameter of `plot()` stands for "character expansion". It is how we can set the percent size of points or text in base R plots. By default it is set to 1 (100%) but if you want points twice as big set it to 2 (200%) and if you want points half as big set it to 0.5 (50%).
 
 ```{r}
+par(pty = "s")
+
 x <- runif(32, 0, 10)
 y <- runif(32, 3, 10)
 
 plot(x,
   y,
   cex = 0.4,
+  asp = 1,
   xlim = c(0, 10),
   ylim = c(0, 10),
   xlab = "", # no x axis label
@@ -151,16 +181,20 @@ plot(x,
 )
 ```
 
+### Functions make your code better
+
 Ok I've had enough of this ugly code we've copy pasted.  To re-use the code without it being so ugly we'll package it up into a function.
 
 This function will take our `x`, `y`, `cex` and plot them just like we've been doing.  The addition I made was the use of `points()`, like `lines()` this lets us draw to an existing canvas rather than creating a new plot.
 
 ```{r}
-plot_snow <- function(x, y, cex = 1, new_plot = TRUE) {
+plot_snow <- function(x, y, cex = 1, new_plot = TRUE, ...) {
   if (new_plot) {
+    par(pty = "s")
     plot(
       x,
       y,
+      asp = 1,
       cex = cex,
       xlim = c(0, 10),
       ylim = c(0, 10),
@@ -168,6 +202,7 @@ plot_snow <- function(x, y, cex = 1, new_plot = TRUE) {
       ylab = "", # no y axis label
       axes = FALSE, # turn off axes
       frame.plot = TRUE, # turn of the outline around the plot
+      ...
     )
   } else {
     points(x, y, cex = cex)
@@ -180,7 +215,7 @@ Use the function to plot 2 different sizes of snow to the same picture.
 ```{r}
 x <- runif(n = 10, min = 0, max = 10)
 y <- runif(n = 10, min = 4, max = 10)
-plot_snow(x, y, cex = 1, new_plot = TRUE)
+plot_snow(x, y, cex = 0.8, new_plot = TRUE)
 
 x <- runif(n = 10, min = 0, max = 10)
 y <- runif(n = 10, min = 4, max = 10)
@@ -189,16 +224,18 @@ plot_snow(x, y, cex = 0.3, new_plot = FALSE)
 
 Ooooohhhhhh
 
+### For loops can take advantage of functions
+
 Do that for a bunch of different sizes!  To add randomness to the scene, we could vary the `n` in `runif()` for the different sizes.
 
 ```{r}
 
-sizes <- c(0.1, 0.2, 0.3, 0.5, 0.8, 1)
+sizes <- c(0.1, 0.2, 0.3, 0.4, 0.5, 0.8)
 
 new_plot <- TRUE
 for (size in sizes) {
-  x <- runif(n = 5, min = 0, max = 10)
-  y <- runif(n = 5, min = 4, max = 10)
+  x <- runif(n = 8, min = 0, max = 10)
+  y <- runif(n = 8, min = 2, max = 10)
   plot_snow(x, y, cex = size, new_plot = new_plot)
   new_plot <- FALSE
 }
@@ -213,7 +250,7 @@ new_plot <- TRUE
 for (size in sizes) {
   n_flakes <- round(runif(1, 3, 10))
   x <- runif(n = n_flakes, min = 0, max = 10)
-  y <- runif(n = n_flakes, min = 4, max = 10)
+  y <- runif(n = n_flakes, min = 3, max = 10)
   plot_snow(x, y, cex = size, new_plot = new_plot)
   new_plot <- FALSE
 }
@@ -226,19 +263,175 @@ lines(x, y)
 
 It needs something.... 
 
+## Do you want to build a snowman?
 
-<p align="center">
-
+<center>
 <img src="https://i.giphy.com/media/WFJAqzg0hZ6dq/giphy.gif" width="50%"/>
-
-</p>
-
-Do you want to... build... a... snowman... ?
+</center>
 
 Hear me out, I think it'll be nice to pretend we haven't made our beautimus landscape. Let's make a snow man and then when he's ready we'll place him on the hill top.
 
-Building pieces separately is usually a solid move, and if we do it with some foresight we should be able to adjust the size and location in the landscape nicely and maybe give our snow dude some friends (or do <a=href="https://i.pinimg.com/736x/0d/37/5c/0d375ceda1f9ae440eb738c1472a845f.jpg" target="_blank">the back of SUV family stickers thing</a>) [the back of SUV family stickers thing](https://i.pinimg.com/736x/0d/37/5c/0d375ceda1f9ae440eb738c1472a845f.jpg){:target="_blank"}).
+Building pieces separately is usually a solid move, and if we do it with some foresight we should be able to adjust the size and location in the landscape nicely and maybe give our snow dude some friends (or do [the back of SUV family stickers thing](https://i.pinimg.com/736x/0d/37/5c/0d375ceda1f9ae440eb738c1472a845f.jpg)).
+
+### We need a blank canvas for our olaf
+
+```{r}
+# A helper to start a blank canvas
+blank_canvas <- function(xlim = c(0, 10),
+                         ylim = c(0, 10)) {
+  par(pty = "s")
+  plot(
+    x = 1, y = 1,
+    asp = 1, type = "n",
+    xlim = xlim, ylim = ylim,
+    xlab = "", ylab = "",
+    axes = FALSE, frame.plot = TRUE
+  )
+}
+blank_canvas()
+```
+
+### A snowman is just circles... right?
+
+Corn cobs and buttons not included.
+
+Circles have a center point and a radius.  We can use the `plotrix` package to draw some.
+
+```{r}
+blank_canvas(xlim = c(0, 10), ylim = c(0, 10))
+draw.circle(5, 5, 3)
+```
+
+```{r}
+# These will be the only inputs
+# the rest of the snowman will be based on these.
+# This will allow for easier re-use on multiple snowmen.
+base_r <- 2
+base_x <- 5
+base_y <- 2
+
+blank_canvas(xlim = c(0, 10), ylim = c(0, 10))
+draw.circle(base_x, base_y, base_r)
+
+head_r <- base_r * 0.6
+head_y <- base_y + base_r + head_r
+draw.circle(base_x, head_y, head_r)
+```
+
+Functionalize!
+
+```{r}
+snowman <- function(base_r = 2, base_x = 5, base_y = 2) {
+  draw.circle(base_x, base_y, base_r)
+
+  head_r <- base_r * 0.6
+  head_y <- base_y + base_r + head_r
+  draw.circle(base_x, head_y, head_r)
+}
+
+blank_canvas()
+snowman()
+
+blank_canvas()
+snowman(base_r = 3, base_x = 3, base_y = 2)
+```
+
+What's a couple more circles, add some eyes.
+
+```{r}
+snowman <- function(base_r = 2, base_x = 5, base_y = 2) {
+  draw.circle(base_x, base_y, base_r)
+
+  head_r <- base_r * 0.6
+  head_y <- base_y + base_r + head_r
+  draw.circle(base_x, head_y, head_r)
+
+  eyes_dx <- head_r * 0.25
+  eyes_y <- head_y + head_r * 0.2
+  eyes_r <- head_r * 0.1
+
+  draw.circle(base_x - eyes_dx, eyes_y, eyes_r)
+  draw.circle(base_x + eyes_dx, eyes_y, eyes_r)
+}
+
+blank_canvas()
+snowman()
+```
+
+Arms and then I'm done.
+
+```{r}
+snowman <- function(base_r = 2, base_x = 5, base_y = 2) {
+  # tush
+  draw.circle(base_x, base_y, base_r)
+
+  # noggin
+  head_r <- base_r * 0.6
+  head_y <- base_y + base_r + head_r
+  draw.circle(base_x, head_y, head_r)
+
+  # peepers
+  eyes_dx <- head_r * 0.25
+  eyes_y <- head_y + head_r * 0.2
+  eyes_r <- head_r * 0.1
+  draw.circle(base_x - eyes_dx, eyes_y, eyes_r)
+  draw.circle(base_x + eyes_dx, eyes_y, eyes_r)
+
+  # guns
+  arms_dx1 <- base_r * 0.8
+  arms_dx2 <- base_r * 0.5
+  arms_y1 <- base_y + base_r * 0.5
+  arms_y2 <- base_y + base_r
+
+  right_arm_xs <- c(base_x + arms_dx1, base_x + arms_dx1 + arms_dx2)
+  left_arm_xs <- c(base_x - arms_dx1, base_x - arms_dx1 - arms_dx2)
+  arm_ys <- c(arms_y1, arms_y2)
+  lines(right_arm_xs, arm_ys)
+  lines(left_arm_xs, arm_ys)
+}
+
+blank_canvas()
+snowman()
+```
+
+## Snowmen on a hill
+
+```{r}
+sizes <- seq(from = 0.05, to = 0.5, by = 0.025)
+
+
+new_plot <- TRUE
+for (size in sizes) {
+  n_flakes <- round(runif(1, 2, 4))
+  x <- runif(n = n_flakes, min = -1, max = 11)
+  y <- runif(n = n_flakes, min = 3, max = 11)
+  plot_snow(x, y, cex = size, new_plot = new_plot)
+  new_plot <- FALSE
+}
+
+x <- -1:11
+y <- -0.04 * (x - 4)^2 + 2
+
+lines(x, y)
+
+snowman(base_r = 0.8, base_x = 2, base_y = 2.7)
+snowman(base_r = 0.4, base_x = 3.7, base_y = 2.4)
+```
+
+# Additional ideas
 
 ```{r}
 
+```
+
+```{js echo=FALSE}
+// add target="_blank" to links (makes em open in new tab)
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
 ```
