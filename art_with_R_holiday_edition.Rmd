@@ -17,7 +17,7 @@ Note: this is essentially a solution file! If you'd like to work through the doc
 
 # Goals of document
 
-1. Have fun
+1. <span class='candy-cane-text'>Have fun</span>
 2. Try and make a pretty winter/holiday picture
 3. Accidentally practice and learn some coding things
 
@@ -26,8 +26,19 @@ Note: this is essentially a solution file! If you'd like to work through the doc
 ## Packages
 
 ```{r}
-# Delete this line after use!
-# install.packages(c("svglite", "plotrix", "ambient"))
+# Delete this after use!
+# install.packages(
+#   c(
+#     "svglite",
+#     "plotrix",
+#     "rvest",
+#     "httr",
+#     "RColorBrewer",
+#     "dplyr",
+#     "devtools"
+#   )
+# )
+# devtools::install_github("lchiffon/wordcloud2")
 ```
 
 ```{r message=FALSE}
@@ -37,8 +48,14 @@ library(svglite)
 # For easy plotting of shapes
 library(plotrix)
 
-# For use of "perlin noise"
-library(ambient)
+# For webscraping christmas carol lyrics
+library(rvest)
+library(httr)
+
+# Wordclouding
+library(dplyr)
+library(tidytext)
+library(wordcloud2)
 ```
 
 ## Start by plotting some random
@@ -418,10 +435,257 @@ snowman(base_r = 0.8, base_x = 2, base_y = 2.7)
 snowman(base_r = 0.4, base_x = 3.7, base_y = 2.4)
 ```
 
-# Additional ideas
+## More functions!
 
 ```{r}
+snow <- function(sizes = seq(from = 0.05, to = 1, by = 0.025)) {
+  new_plot <- TRUE
+  for (size in sizes) {
+    n_flakes <- round(runif(1, 2, 6))
+    x <- runif(n = n_flakes, min = -1, max = 11)
+    y <- runif(n = n_flakes, min = 3, max = 11)
+    plot_snow(x, y, cex = size, new_plot = new_plot)
+    new_plot <- FALSE
+  }
+}
 
+hill <- function() {
+  x <- -1:11
+  y <- -0.04 * (x - 4)^2 + 2
+
+  lines(x, y)
+}
+```
+
+```{r}
+snow()
+hill()
+snowman(base_r = 0.8, base_x = 2, base_y = 2.7)
+snowman(base_r = 0.4, base_x = 3.7, base_y = 2.4)
+```
+
+## Save your masterpiece
+
+```{r}
+# Choose file type by using one of the next 2 lines
+# Only have one of the next two uncommented
+# png("snowmen.png")
+svglite("snowmen.svg")
+
+snow()
+hill()
+snowman(base_r = 0.8, base_x = 2, base_y = 2.7)
+snowman(base_r = 0.4, base_x = 3.7, base_y = 2.4)
+
+dev.off()
+```
+
+# Additional ideas
+
+## Snowflake
+
+Or maybe it's a star.... idk
+
+```{r}
+blank_canvas()
+
+# center of canvas
+cx <- 5
+cy <- 5
+
+# length of snowflake "arms" (radius)
+r <- 5
+
+x <- 10
+y <- 5
+lines(c(cx, cx + r), c(cy, y))
+```
+
+```{r}
+blank_canvas()
+
+# Rotate with SOH CAH TOA!
+# (this is how plotrix is calculating its circle points too)
+
+# AHHHH!! R does angles in radians! AHHHH!
+# 360 degrees -> 2.0 * pi radians
+# 180 degrees -> 1.0 * pi radians
+#  90 degrees -> 0.5 * pi radians
+a <- 0.0 * pi
+x <- cx + cos(a) * r
+y <- cy + sin(a) * r
+lines(c(cx, x), c(cy, y))
+
+a <- 0.25 * pi
+x <- cx + cos(a) * r
+y <- cy + sin(a) * r
+lines(c(cx, x), c(cy, y))
+
+a <- 0.5 * pi
+x <- cx + cos(a) * r
+y <- cy + sin(a) * r
+lines(c(cx, x), c(cy, y))
+```
+
+```{r}
+blank_canvas()
+
+n_arms <- 8
+a <- 0
+delta_a <- (2 * pi) / n_arms
+
+for (i in 1:n_arms) {
+  x <- cx + cos(a) * r
+  y <- cy + sin(a) * r
+  lines(c(cx, x), c(cy, y))
+
+  a <- a + delta_a
+}
+```
+
+```{r}
+blank_canvas()
+
+cx <- 5
+cy <- 5
+
+r <- 5
+small_r <- 4
+
+n_arms <- 8
+
+a <- 0
+delta_a <- (2 * pi) / n_arms
+
+for (i in 1:n_arms) {
+  x <- cx + cos(a) * r
+  y <- cy + sin(a) * r
+  small_x <- cx + cos(a + 0.125 * pi) * small_r
+  small_y <- cy + sin(a + 0.125 * pi) * small_r
+
+  lines(c(cx, x), c(cy, y))
+  lines(c(cx, small_x), c(cy, small_y))
+
+  a <- a + delta_a
+}
+```
+
+```{r}
+blank_canvas()
+
+cx <- 5
+cy <- 5
+
+r <- 5
+small_r <- 4
+smaller_r <- 3
+
+n_arms <- 16
+
+a <- 0
+delta_a <- (2 * pi) / n_arms
+small_a_offset <- pi / n_arms
+
+for (i in 1:n_arms) {
+  x <- cx + cos(a) * r
+  y <- cy + sin(a) * r
+  small_x <- cx + cos(a + small_a_offset * pi) * small_r
+  small_y <- cy + sin(a + small_a_offset * pi) * small_r
+
+  lines(c(cx, x), c(cy, y))
+  lines(c(cx, small_x), c(cy, small_y))
+
+  draw.circle(x, y, 0.1)
+  draw.circle(small_x, small_y, 0.1)
+
+
+  a <- a + delta_a
+}
+```
+
+## Fun with word clouds
+
+Scrape some data.  I chose https://www.41051.com/xmaslyrics/ because it popped up first on my google search
+
+```{r include=FALSE}
+# site's going to change or block me...
+# reading from google sheets
+carol_lyrics_df <- read.csv("https://docs.google.com/spreadsheets/d/1kNleoC8w0yVt0KU2tqAfNqPdUHNuWsZat4Q_d_UE6Tc/export?format=csv")
+```
+
+```{r eval=FALSE}
+base_site <- "https://www.41051.com/xmaslyrics/"
+
+# download base site
+response <- httr::GET(base_site)
+stop_for_status(response)
+
+# pull the address from each carol's link
+links <- response %>%
+  content() %>%
+  html_nodes(".list2 a") %>%
+  html_attr("href")
+
+# get the lyrics from each carol's page
+carol_lyrics <- vapply(links, function(link) {
+  # example: https://www.41051.com/xmaslyrics/chestnuts.html
+  lyrics_url <- paste0(base_site, link)
+
+  # download lyrics page
+  response <- httr::GET(lyrics_url)
+  stop_for_status(response)
+
+  # pull lyrics from page a remove lead/trail whitespace
+  response %>%
+    content() %>%
+    html_nodes(".bodytext") %>%
+    html_text() %>%
+    trimws()
+}, character(1))
+
+# remove google ads stuff and clean up whitespace
+carol_lyrics <- carol_lyrics %>%
+  gsub(
+    pattern = "(adsbygoogle = window.adsbygoogle || []).push({});",
+    replacement = "",
+    fixed = TRUE
+  ) %>%
+  gsub(pattern = "\\s{2,}", replacement = "\n")
+
+# store in data.frame and write to file
+carol_lyrics_df <- data.frame(
+  id = gsub(links, pattern = ".html", replacement = ""),
+  source = paste0(base_site, links),
+  lyrics = carol_lyrics
+)
+
+write.csv(carol_lyrics_df, "xmas_carols.csv", row.names = FALSE)
+```
+
+```{r}
+word_counts <- carol_lyrics_df %>%
+  unnest_tokens(word, lyrics) %>%
+  group_by(word) %>%
+  summarise(freq = n())
+
+word_counts <- word_counts %>%
+  anti_join(stop_words, by = "word") %>%
+  filter(is.na(as.numeric(word))) %>%
+  arrange(-freq) %>%
+  as.data.frame()
+
+rownames(word_counts) <- word_counts$word
+
+head(word_counts)
+
+wordcloud2(word_counts)
+
+# Supposedly these should work...
+# ... but I can't get it too before the session :(
+# "~/Downloads/xmas-tree.png" is downloaded image of:
+# https://d29fhpw069ctt2.cloudfront.net/icon/image/39241/preview.png
+wordcloud2(word_counts, figPath = "~/Downloads/xmas-tree.png")
+letterCloud(word_counts, word = "XMAS")
 ```
 
 ```{js echo=FALSE}
