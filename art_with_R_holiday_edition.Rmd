@@ -17,9 +17,9 @@ Note: this is essentially a solution file! If you'd like to work through the doc
 
 # Goals of document
 
-1. <span class='candy-cane-text'>Have fun</span>
-2. Try and make a pretty winter/holiday picture
-3. Accidentally practice and learn some coding things
+1.  [Have fun]{.candy-cane-text}
+2.  Try and make a pretty winter/holiday picture
+3.  Accidentally practice and learn some coding things
 
 # Getting into it
 
@@ -62,26 +62,27 @@ library(wordcloud2)
 
 Let's start with a regular R plot. Plot `y` by `x`. Before we can plot `x` and `y` we need an `x` and a `y` to plot! Below makes some random data using the `runif()` function.
 
-`runif` (short for "random uniform") pulls random values from a ["uniform" distribution](https://www.statisticshowto.com/probability-and-statistics/statistics-definitions/uniform-distribution/) (uniform here means that all values are equally likely, the prbability of each value is uniform).
+`runif` (short for "random uniform") pulls random values from a ["uniform" distribution](https://www.statisticshowto.com/probability-and-statistics/statistics-definitions/uniform-distribution/) (uniform here means that all values are equally likely, the probability of each value is uniform).
+
+What other distributions do you know? How would they differ from uniform snow here?
 
 ```{r}
-x <- runif(n = 32, min = -1, max = 11)
-y <- runif(n = 32, min = 2, max = 11)
+# Make a random x and y
 ```
 
 ```{r}
-plot(x, y)
+# Plot it
 ```
 
 ## Modifying axes
 
 It's snowing!!
 
-<center>
-<img src="https://i.imgur.com/94n8qwl.png" width="50%"/>
-</center>
+<center><img src="https://i.imgur.com/94n8qwl.png" width="50%"/></center>
 
 Get them pesky axes out of there....
+
+P.S. its very rare for someone to know all of these plot options - they look overwhelming because, well, they are. Good news, R often chooses reasonable defaults, and in almost every real charting scenario, removing the axes is a horrible idea.
 
 ```{r}
 par(pty = "s")
@@ -116,29 +117,52 @@ plot(
 
 ## Draw a hill with math!
 
-Let's add in some ground!  Flat ground is boring... what's a mathy way to make it look like we've got a hilltop?
+Let's add in some ground! Flat ground is boring... what's a mathy way to make it look like we've got a hilltop? What $f(x)$ do you know that makes hills?
 
-Work on it by itself without the snow to mix things up.
+Replace the below with hill math.
 
-$$y = -0.04 \cdot (x - 4)^2 + 2$$
+$$y = x$$
 
-* $\cdot$ -0.04 flips it and controls steepness
-* -4 shifts it horizontally
-* +2 shifts it vertically
+Let's prove it out alone without the snow involved to simplify our hill building process.
 
 ```{r}
 # don't modify `x`
 x <- -1:11
 
 # make a `y` using `x` to make our hilltop
-y <- -0.04 * (x - 4)^2 + 2
+y <-
+  # don't modify this plot code
+  par(pty = "s")
+plot(x, y, asp = 1, type = "l", xlim = c(0, 10), ylim = c(0, 10))
+```
+
+Try adding the pieces together:
+
+```{r}
+par(pty = "s")
+
+x <- runif(32, 0, 10)
+y <- runif(32, 3, 10)
+plot(
+  x,
+  y,
+  xlim = c(1, 9),
+  ylim = c(0, 9),
+  asp = 1,
+  xlab = "", # no x axis label
+  ylab = "", # no y axis label
+  axes = FALSE, # turn off axes
+  frame.plot = TRUE, # turn of the outline around the plot
+)
 
 # don't modify this plot code
 par(pty = "s")
 plot(x, y, asp = 1, type = "l", xlim = c(0, 10), ylim = c(0, 10))
 ```
 
-To combine this and our snow we can't use `plot()`.  We have two separate sets of `x`s & `y`s to draw and if we use `plot()` twice it will make two separate pictures.  We can use `lines()` to draw our hill after we use `plot()` to create our canvas and draw the snow.
+Hmmmm.... bummer.... R creates a new canvas everytime we call the `plot()` function.
+
+So to combine this beautimus hill and our snow we can't use `plot()`. We have two separate sets of `x`s & `y`s to draw and if we use `plot()` twice it will make two separate pictures. We can use `lines()` to draw our hill after we use `plot()` to create our canvas and draw the snow.
 
 ```{r}
 par(pty = "s")
@@ -167,13 +191,13 @@ lines(x, y)
 
 What would make it look more like snow?...
 
-Snow flakes shouldn't all be the same size. What's often beautiful about nature is the irregularities.
+Snowflakes shouldn't all be the same size. What's beautiful about nature is the irregularities.
 
 First lets just look at how to modify the size of the points.
 
 ------------------------------------------------------------------------
 
-*🚨 Pause 🚨: we are professionals that can acknowledge homophones and push forward? ... right?*
+*🚨 Pause 🚨: we are mature professionals that can acknowledge homophones and push forward? ... right?*
 
 ------------------------------------------------------------------------
 
@@ -200,9 +224,151 @@ plot(x,
 
 ### Functions make your code better
 
-Ok I've had enough of this ugly code we've copy pasted.  To re-use the code without it being so ugly we'll package it up into a function.
+Ok I've had enough of this ugly code we've copy pasted. To re-use the code without it being so ugly we'll package it up into a function.
 
-This function will take our `x`, `y`, `cex` and plot them just like we've been doing.  The addition I made was the use of `points()`, like `lines()` this lets us draw to an existing canvas rather than creating a new plot.
+#### Brief function intro interlude
+
+Doing the same thing over and over? Give that task a name to make it easier to re-use and easier to read.
+
+```{r}
+# Day 1
+day <- 1
+print(paste("--- Day", day, "------------"))
+print("brush teeth")
+print("take shower")
+print("apply deodorant")
+print("put in contacts")
+print("get dressed")
+print("do hair")
+print("make coffee")
+print("----------------------")
+
+# Day 2
+day <- 2
+print(paste("--- Day", day, "------------"))
+print("brush teeth")
+print("take shower")
+print("apply deodorant")
+print("put in contacts")
+print("get dressed")
+print("do hair")
+print("make coffee")
+print("----------------------")
+
+# Day 3
+day <- 3
+print(paste("--- Day", day, "------------"))
+print("brush teeth")
+print("take shower")
+print("apply deodorant")
+print("put in contacts")
+print("get dressed")
+print("do hair")
+print("make coffee")
+print("----------------------")
+```
+
+With a function we can make our morning routine easier to repeat
+
+```{r}
+morning_routine <- function(day) {
+  print(paste("--- Day", day, "------------"))
+  print("brush teeth")
+  print("take shower")
+  print("apply deodorant")
+  print("put in contacts")
+  print("get dressed")
+  print("do hair")
+  print("make coffee")
+  print("----------------------")
+}
+```
+
+```{r}
+# Day 1
+morning_routine(day = 1)
+
+# Day 2
+morning_routine(day = 2)
+
+# Day 3
+morning_routine(day = 3)
+```
+
+We can add "parameters" aka "arguments" to change up the routine if we need to
+
+```{r}
+morning_routine <- function(day, in_a_rush = FALSE) {
+  print(paste("--- Day", day, "------------"))
+  print("brush teeth")
+
+  if (!in_a_rush) print("take shower")
+
+  print("apply deodorant")
+  print("put in contacts")
+
+  if (!in_a_rush) {
+    print("get dressed")
+  } else {
+    print("sweat pants")
+  }
+
+  if (!in_a_rush) {
+    print("do hair")
+    print("make coffee")
+  }
+
+  print("----------------------")
+}
+```
+
+```{r}
+morning_routine(day = 1, in_a_rush = FALSE)
+morning_routine(day = 2, in_a_rush = TRUE)
+```
+
+A more realistic(ish) for analytics functions
+
+```{r}
+square <- function(x) {
+  x^2
+}
+
+square(2)
+```
+
+```{r}
+my_summary <- function(x) {
+  if (is.character(x)) {
+    cat("X is character data\n\n")
+    
+    cat("Counts of values in X:\n")
+    print(table(x))
+  } else if (is.numeric(x)) {
+    cat("X is numeric data\n")
+    
+    cat("Numeric summary:\n")
+    summary(x)
+  }
+  
+  cat("\nProportion of X that's NA:\n")
+  print(mean(is.na(x)))
+}
+```
+
+```{r}
+x <- c("A", "C", "B", "D", "C", "A", "C", NA, "B", NA, "A", "C", NA, "B", "B", "A")
+my_summary(x)
+```
+
+```{r}
+x <- c(10.6, NA, 9.1, 11.7, NA, 11, 9.1, 9.5, 9.1, NA, NA, 10.3, NA, 9.8, 10.8, NA)
+my_summary(x)
+```
+
+Back to our snowscape arting:
+
+This function will take our `x`, `y`, `cex` and plot them just like we've been doing. The addition I made was the use of `points()`, like `lines()` this lets us draw to an existing canvas rather than creating a new plot.
 
 ```{r}
 plot_snow <- function(x, y, cex = 1, new_plot = TRUE, ...) {
@@ -243,10 +409,9 @@ Ooooohhhhhh
 
 ### For loops can take advantage of functions
 
-Do that for a bunch of different sizes!  To add randomness to the scene, we could vary the `n` in `runif()` for the different sizes.
+Do that for a bunch of different sizes! To add randomness to the scene, we could vary the `n` in `runif()` for the different sizes.
 
 ```{r}
-
 sizes <- c(0.1, 0.2, 0.3, 0.4, 0.5, 0.8)
 
 new_plot <- TRUE
@@ -278,13 +443,11 @@ y <- -0.04 * (x - 4)^2 + 2
 lines(x, y)
 ```
 
-It needs something.... 
+It needs something....
 
 ## Do you want to build a snowman?
 
-<center>
-<img src="https://i.giphy.com/media/WFJAqzg0hZ6dq/giphy.gif" width="50%"/>
-</center>
+<center><img src="https://i.giphy.com/media/WFJAqzg0hZ6dq/giphy.gif" width="50%"/></center>
 
 Hear me out, I think it'll be nice to pretend we haven't made our beautimus landscape. Let's make a snow man and then when he's ready we'll place him on the hill top.
 
@@ -312,12 +475,25 @@ blank_canvas()
 
 Corn cobs and buttons not included.
 
-Circles have a center point and a radius.  We can use the `plotrix` package to draw some.
+Circles have a center point and a radius. We can use the `plotrix` package to draw some.
 
 ```{r}
 blank_canvas(xlim = c(0, 10), ylim = c(0, 10))
-draw.circle(5, 5, 3)
+draw.circle(x = 5, y = 5, radius = 3)
 ```
+
+Ok, time to think again... How can we stack our head circle on our base circle?
+
+Let's problem solve:
+
+-   I want to know
+    -   
+-   I know
+    -   
+
+    -   
+
+    -   
 
 ```{r}
 # These will be the only inputs
@@ -330,12 +506,16 @@ base_y <- 2
 blank_canvas(xlim = c(0, 10), ylim = c(0, 10))
 draw.circle(base_x, base_y, base_r)
 
-head_r <- base_r * 0.6
-head_y <- base_y + base_r + head_r
+head_r <- ????
+head_y <- ????
 draw.circle(base_x, head_y, head_r)
 ```
 
+We could get crazy and make this a 3 part snowman, but I'll stick with 2 (i tried 3 and i thought 2 ended up cuter... `¯\_(ツ)_/¯`)
+
 Functionalize!
+
+Practice "parameterizing" by adding a parameter to control the percent size of head to body.
 
 ```{r}
 snowman <- function(base_r = 2, base_x = 5, base_y = 2) {
@@ -411,11 +591,12 @@ blank_canvas()
 snowman()
 ```
 
+Well isn't that just the cutest darn snowman you've ever plotted
+
 ## Snowmen on a hill
 
 ```{r}
 sizes <- seq(from = 0.05, to = 0.5, by = 0.025)
-
 
 new_plot <- TRUE
 for (size in sizes) {
@@ -603,9 +784,11 @@ for (i in 1:n_arms) {
 }
 ```
 
+We might have just plotted a virus when trying to make Christmassy things.....
+
 ## Fun with word clouds
 
-Scrape some data.  I chose https://www.41051.com/xmaslyrics/ because it popped up first on my google search
+Scrape some data. I chose https://www.41051.com/xmaslyrics/ because it popped up first on my google search
 
 ```{r include=FALSE}
 # site's going to change or block me...
@@ -621,9 +804,9 @@ response <- httr::GET(base_site)
 stop_for_status(response)
 
 # pull the address from each carol's link
-links <- response %>%
-  content() %>%
-  html_nodes(".list2 a") %>%
+links <- response |>
+  content() |>
+  html_nodes("#p7HMY_2 a") |>
   html_attr("href")
 
 # get the lyrics from each carol's page
@@ -636,20 +819,20 @@ carol_lyrics <- vapply(links, function(link) {
   stop_for_status(response)
 
   # pull lyrics from page a remove lead/trail whitespace
-  response %>%
-    content() %>%
-    html_nodes(".bodytext") %>%
-    html_text() %>%
+  response |>
+    content() |>
+    html_nodes("div.hmy-left p") |>
+    html_text() |>
     trimws()
 }, character(1))
 
 # remove google ads stuff and clean up whitespace
-carol_lyrics <- carol_lyrics %>%
+carol_lyrics <- carol_lyrics |>
   gsub(
     pattern = "(adsbygoogle = window.adsbygoogle || []).push({});",
     replacement = "",
     fixed = TRUE
-  ) %>%
+  ) |>
   gsub(pattern = "\\s{2,}", replacement = "\n")
 
 # store in data.frame and write to file
@@ -663,15 +846,15 @@ write.csv(carol_lyrics_df, "xmas_carols.csv", row.names = FALSE)
 ```
 
 ```{r}
-word_counts <- carol_lyrics_df %>%
-  unnest_tokens(word, lyrics) %>%
-  group_by(word) %>%
+word_counts <- carol_lyrics_df |>
+  unnest_tokens(word, lyrics) |>
+  group_by(word) |>
   summarise(freq = n())
 
-word_counts <- word_counts %>%
-  anti_join(stop_words, by = "word") %>%
-  filter(is.na(as.numeric(word))) %>%
-  arrange(-freq) %>%
+word_counts <- word_counts |>
+  anti_join(stop_words, by = "word") |>
+  filter(is.na(as.numeric(word))) |>
+  arrange(-freq) |>
   as.data.frame()
 
 rownames(word_counts) <- word_counts$word
