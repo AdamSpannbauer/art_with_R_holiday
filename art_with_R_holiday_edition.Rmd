@@ -790,11 +790,13 @@ Scrape some data. I chose https://www.41051.com/xmaslyrics/ because it popped up
 
 ```{r include=FALSE}
 # site's going to change or block me...
-# reading from google sheets
+# reading from google sheets so demo works in the future
 carol_lyrics_df <- read.csv("https://docs.google.com/spreadsheets/d/1kNleoC8w0yVt0KU2tqAfNqPdUHNuWsZat4Q_d_UE6Tc/export?format=csv")
 ```
 
-```{r eval=FALSE}
+This *was* the scrape code.  The site has changed since and I'm not motivated to update rn... :shrug:
+
+```r
 base_site <- "https://www.41051.com/xmaslyrics/"
 
 # download base site
@@ -802,9 +804,9 @@ response <- httr::GET(base_site)
 stop_for_status(response)
 
 # pull the address from each carol's link
-links <- response |>
-  content() |>
-  html_nodes("#p7HMY_2 a") |>
+links <- response %>%
+  content() %>%
+  html_nodes(".list2 a") %>%
   html_attr("href")
 
 # get the lyrics from each carol's page
@@ -817,20 +819,20 @@ carol_lyrics <- vapply(links, function(link) {
   stop_for_status(response)
 
   # pull lyrics from page a remove lead/trail whitespace
-  response |>
-    content() |>
-    html_nodes("div.hmy-left p") |>
-    html_text() |>
+  response %>%
+    content() %>%
+    html_nodes(".bodytext") %>%
+    html_text() %>%
     trimws()
 }, character(1))
 
 # remove google ads stuff and clean up whitespace
-carol_lyrics <- carol_lyrics |>
+carol_lyrics <- carol_lyrics %>%
   gsub(
     pattern = "(adsbygoogle = window.adsbygoogle || []).push({});",
     replacement = "",
     fixed = TRUE
-  ) |>
+  ) %>%
   gsub(pattern = "\\s{2,}", replacement = "\n")
 
 # store in data.frame and write to file
