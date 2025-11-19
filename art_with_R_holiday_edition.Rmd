@@ -13,8 +13,6 @@ output:
       in_header: "./favicon.html"
 ---
 
-Note: this is essentially a solution file! If you'd like to work through the document without all the code provided download [this .Rmd file](https://minhaskamal.github.io/DownGit/#/home?url=https://github.com/AdamSpannbauer/art_with_R_holiday/blob/master/art_with_R_holiday_edition.Rmd) (**link warning!** clicking the link will auto download the .Rmd).
-
 # Goals of document
 
 1.  [Have fun]{.candy-cane-text}
